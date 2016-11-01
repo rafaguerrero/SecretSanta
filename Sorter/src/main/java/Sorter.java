@@ -3,7 +3,7 @@ import java.util.*;
 public class Sorter {
 
     private static final List<String> PARTICIPANTS = new ArrayList();
-    private static final Map<String, String> RULES = new HashMap();
+    private static final Map<String, List<String>> RULES = new HashMap();
     static {
         ResourcesPropertiesLoader propertiesLoader = new ResourcesPropertiesLoader();
 
@@ -38,7 +38,7 @@ public class Sorter {
         String current = unassigned.get(random);
         unassigned.remove(current);
 
-        List<String> candidates = Arrays.asList(RULES.get(current).split(","));
+        List<String> candidates = RULES.get(current);
 
         for(String candidate : candidates) {
             solution.put(current, candidate);
