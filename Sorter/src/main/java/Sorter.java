@@ -21,14 +21,19 @@ public class Sorter {
 
     public static void main(String[] args) {
         List<String> unassigned = new ArrayList<>(PARTICIPANTS);
+        List<String> receivers = new ArrayList<>();
         Map<String, String> solution = new HashMap<>();
 
-        sort(unassigned, solution);
+        boolean solutionFound = sort(unassigned, receivers, solution);
 
-        solution.forEach((k,v)->System.out.println(k + " gives present to : " + v));
+        if(solutionFound) {
+            solution.forEach((k,v)->System.out.println(k + " gives present to : " + v));
+        } else {
+            System.out.println("Couldn't find a proper solution");
+        }
     }
 
-    private static boolean sort(List<String> unassigned, Map<String, String> solution) {
+    private static boolean sort(List<String> unassigned, List<String> receivers, Map<String, String> solution) {
         if(unassigned.isEmpty()) {
             return true;
         }
@@ -38,13 +43,18 @@ public class Sorter {
         String current = unassigned.get(random);
         unassigned.remove(current);
 
-        List<String> candidates = RULES.get(current);
+        List<String> candidates = getCandidates(current, receivers);
 
         for(String candidate : candidates) {
-            solution.put(current, candidate);
+            if(!receivers.contains(candidate)) {
+                solution.put(current, candidate);
+                receivers.add(candidate);
 
-            if(sort(unassigned, solution)) {
-                return true;
+                if(sort(unassigned, receivers, solution)) {
+                    return true;
+                }
+
+                receivers.remove(candidate);
             }
         }
 
@@ -52,5 +62,21 @@ public class Sorter {
         solution.remove(current);
 
         return false;
+    }
+
+    private static List<String> getCandidates(String current, List<String> receivers) {
+        List<String> candidates = RULES.get(current);
+        int lastIndex = candidates.size() - 1;
+
+        if ("*".equals(candidates.get(lastIndex))) {
+            List<String> missingCandidates = new ArrayList(PARTICIPANTS);
+            missingCandidates.remove(current);
+            missingCandidates.removeAll(receivers);
+
+            candidates.remove(lastIndex);
+            candidates.addAll(missingCandidates);
+        }
+
+        return candidates;
     }
 }
