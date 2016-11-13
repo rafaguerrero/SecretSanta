@@ -1,46 +1,42 @@
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class Sorter {
+    private static Map<String, List<String>> RULES;
+    private static List<String> PARTICIPANTS;
 
-    private static final List<String> PARTICIPANTS = new ArrayList();
-    private static final Map<String, List<String>> RULES = new HashMap();
-    static {
-        ResourcesPropertiesLoader propertiesLoader = new ResourcesPropertiesLoader();
+    public static Map<String, String> sort(List<String> participants, Map<String, List<String>> rules) throws Exception {
+        RULES = rules;
+        PARTICIPANTS = participants;
 
-        try {
-            propertiesLoader.mapProperties("participants.properties", PARTICIPANTS);
-            propertiesLoader.mapProperties("rules.properties", RULES);
-
-        } catch (Exception e) {
-            System.out.println("COULDN'T MAP PROPERTIES");
-            System.out.println(e.getMessage());
-        }
-    }
-
-
-
-    public static void main(String[] args) {
-        List<String> unassigned = new ArrayList<>(PARTICIPANTS);
+        List<String> unassigned = randomize(new ArrayList<>(participants));
         List<String> receivers = new ArrayList<>();
         Map<String, String> solution = new HashMap<>();
 
+        List<String> randomCandidates = unassigned.stream()
+                                                   .filter(p -> rules.get(p).get(0).equals("*"))
+                                                   .collect(Collectors.toList());
+        unassigned.removeAll(randomCandidates);
+        unassigned.addAll(randomCandidates);
+
         boolean solutionFound = sort(unassigned, receivers, solution);
 
-        if(solutionFound) {
-            solution.forEach((k,v)->System.out.println(k + " gives present to : " + v));
-        } else {
-            System.out.println("Couldn't find a proper solution");
+        if(!solutionFound) {
+            throw new Exception("Couldn't find a proper solution");
         }
+
+        return solution;
     }
 
-    private static boolean sort(List<String> unassigned, List<String> receivers, Map<String, String> solution) {
+    private static boolean sort(List<String> unassigned,
+                                List<String> receivers,
+                                Map<String, String> solution) {
+
         if(unassigned.isEmpty()) {
             return true;
         }
 
-        int random = (int) Math.floor(Math.random() * unassigned.size());
-
-        String current = unassigned.get(random);
+        String current = unassigned.get(0);
         unassigned.remove(current);
 
         List<String> candidates = getCandidates(current, receivers);
@@ -55,6 +51,7 @@ public class Sorter {
                 }
 
                 receivers.remove(candidate);
+                solution.remove(current);
             }
         }
 
@@ -78,5 +75,13 @@ public class Sorter {
         }
 
         return candidates;
+    }
+
+    private static List<String> randomize(List<String> participants) {
+        long seed = System.nanoTime();
+
+        Collections.shuffle(participants, new Random(seed));
+
+        return participants;
     }
 }
